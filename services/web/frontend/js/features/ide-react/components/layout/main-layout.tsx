@@ -5,14 +5,14 @@ import classNames from 'classnames'
 import { useLayoutContext } from '@/shared/context/layout-context'
 import EditorNavigationToolbar from '@/features/ide-react/components/editor-navigation-toolbar'
 import ChatPane from '@/features/chat/components/chat-pane'
-import LLMChatPane from '@/features/llm-chat/components/llm-chat-pane' // NEW
+import LLMChatPane from '@/features/llm-chat/components/llm-chat-pane'
 import { HorizontalToggler } from '@/features/ide-react/components/resize/horizontal-toggler'
 import { HistorySidebar } from '@/features/ide-react/components/history-sidebar'
 import EditorSidebar from '@/features/ide-react/components/editor-sidebar'
 import { useTranslation } from 'react-i18next'
 import { useSidebarPane } from '@/features/ide-react/hooks/use-sidebar-pane'
 import { useChatPane } from '@/features/ide-react/hooks/use-chat-pane'
-import { useLLMChatPane } from '@/features/ide-react/hooks/use-llm-chat-pane' // NEW
+import { useLLMChatPane } from '@/features/ide-react/hooks/use-llm-chat-pane'
 import { EditorAndPdf } from '@/features/ide-react/components/editor-and-pdf'
 import HistoryContainer from '@/features/ide-react/components/history-container'
 import getMeta from '@/utils/meta'
@@ -49,7 +49,6 @@ export const MainLayout: FC = () => {
     handlePaneExpand: handleChatExpand,
   } = useChatPane()
 
-  // NEW: LLM Chat pane hook
   const {
     isOpen: llmChatIsOpen,
     panelRef: llmChatPanelRef,
@@ -65,6 +64,14 @@ export const MainLayout: FC = () => {
 
   const { t } = useTranslation()
 
+  // Debug logging
+  console.log('[MainLayout] Render - Chat States:', {
+    chatIsOpen,
+    llmChatIsOpen,
+    chatEnabled,
+    timestamp: new Date().toISOString()
+  })
+
   return (
     <div className="ide-react-main">
       <EditorNavigationToolbar />
@@ -73,7 +80,7 @@ export const MainLayout: FC = () => {
           autoSaveId="ide-outer-layout"
           direction="horizontal"
           className={classNames({
-            'ide-panel-group-resizing': sidebarResizing || chatResizing || llmChatResizing, // UPDATED
+            'ide-panel-group-resizing': sidebarResizing || chatResizing || llmChatResizing,
           })}
         >
           {/* sidebar */}
@@ -115,56 +122,58 @@ export const MainLayout: FC = () => {
                 <EditorAndPdf />
               </Panel>
 
-              {/* NEW: LLM Chat panel - placed before regular chat */}
-              {chatEnabled && (
-                <>
-                  <HorizontalResizeHandle
-                    onDoubleClick={toggleLLMChat}
-                    resizable={llmChatIsOpen}
-                    onDragging={setLLMChatResizing}
-                    hitAreaMargins={{ coarse: 0, fine: 0 }}
-                  />
-
-                  <Panel
-                    ref={llmChatPanelRef}
-                    id="panel-llm-chat"
-                    order={2}
-                    defaultSize={20}
-                    minSize={5}
-                    maxSize={30}
-                    collapsible
-                    onCollapse={handleLLMChatCollapse}
-                    onExpand={handleLLMChatExpand}
-                  >
-                    <LLMChatPane />
-                  </Panel>
-                </>
+              {/* LLM Chat panel */}
+              {chatEnabled && llmChatIsOpen && (
+                <HorizontalResizeHandle
+                  onDoubleClick={toggleLLMChat}
+                  resizable={llmChatIsOpen}
+                  onDragging={setLLMChatResizing}
+                  hitAreaMargins={{ coarse: 0, fine: 0 }}
+                />
               )}
 
               {chatEnabled && (
-                <>
-                  <HorizontalResizeHandle
-                    onDoubleClick={toggleChat}
-                    resizable={chatIsOpen}
-                    onDragging={setChatResizing}
-                    hitAreaMargins={{ coarse: 0, fine: 0 }}
-                  />
+                <Panel
+                  ref={llmChatPanelRef}
+                  id="panel-llm-chat"
+                  order={2}
+                  defaultSize={20}
+                  minSize={5}
+                  maxSize={30}
+                  collapsible
+                  collapsedSize={0}
+                  onCollapse={handleLLMChatCollapse}
+                  onExpand={handleLLMChatExpand}
+                >
+                  <LLMChatPane />
+                </Panel>
+              )}
 
-                  {/* chat */}
-                  <Panel
-                    ref={chatPanelRef}
-                    id="panel-chat"
-                    order={3} // UPDATED: was 2, now 3 because LLM chat is order 2
-                    defaultSize={20}
-                    minSize={5}
-                    maxSize={30}
-                    collapsible
-                    onCollapse={handleChatCollapse}
-                    onExpand={handleChatExpand}
-                  >
-                    <ChatPane />
-                  </Panel>
-                </>
+              {/* Regular chat */}
+              {chatEnabled && chatIsOpen && (
+                <HorizontalResizeHandle
+                  onDoubleClick={toggleChat}
+                  resizable={chatIsOpen}
+                  onDragging={setChatResizing}
+                  hitAreaMargins={{ coarse: 0, fine: 0 }}
+                />
+              )}
+
+              {chatEnabled && (
+                <Panel
+                  ref={chatPanelRef}
+                  id="panel-chat"
+                  order={3}
+                  defaultSize={20}
+                  minSize={5}
+                  maxSize={30}
+                  collapsible
+                  collapsedSize={0}
+                  onCollapse={handleChatCollapse}
+                  onExpand={handleChatExpand}
+                >
+                  <ChatPane />
+                </Panel>
               )}
             </PanelGroup>
           </Panel>

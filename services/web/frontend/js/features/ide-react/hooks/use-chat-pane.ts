@@ -2,8 +2,8 @@ import { useLayoutContext } from '@/shared/context/layout-context'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ImperativePanelHandle } from 'react-resizable-panels'
 
-export const useLLMChatPane = () => {
-  const { llmChatIsOpen: isOpen, setLLMChatIsOpen: setIsOpen } = useLayoutContext()
+export const useChatPane = () => {
+  const { chatIsOpen: isOpen, setChatIsOpen: setIsOpen } = useLayoutContext()
   const [resizing, setResizing] = useState(false)
   const panelRef = useRef<ImperativePanelHandle>(null)
 
@@ -12,7 +12,7 @@ export const useLLMChatPane = () => {
     const panel = panelRef.current
     if (!panel) return
 
-    console.log('[useLLMChatPane] State changed to:', isOpen)
+    console.log('[useChatPane] State changed to:', isOpen)
     
     if (isOpen) {
       panel.expand()
@@ -22,19 +22,19 @@ export const useLLMChatPane = () => {
   }, [isOpen])
 
   const togglePane = useCallback(() => {
-    console.log('[useLLMChatPane] Toggling LLM chat from', isOpen, 'to', !isOpen)
+    console.log('[useChatPane] Toggling regular chat from', isOpen, 'to', !isOpen)
     setIsOpen(value => !value)
   }, [setIsOpen, isOpen])
 
   const handlePaneExpand = useCallback(() => {
-    console.log('[useLLMChatPane] LLM chat expand callback called')
+    console.log('[useChatPane] Regular chat expand callback called')
     if (!isOpen) {
       setIsOpen(true)
     }
   }, [isOpen, setIsOpen])
 
   const handlePaneCollapse = useCallback(() => {
-    console.log('[useLLMChatPane] LLM chat collapse callback called')
+    console.log('[useChatPane] Regular chat collapse callback called')
     if (isOpen) {
       setIsOpen(false)
     }

@@ -84,6 +84,8 @@ const ToolbarHeader = React.memo(function ToolbarHeader({
   hasRenamePermissions,
   openShareModal,
   trackChangesVisible,
+  llmChatIsOpen,        // ADD THIS
+  toggleLLMChatOpen,    // ADD THIS
 }: ToolbarHeaderProps) {
   const chatEnabled = getMeta('ol-capabilities')?.includes('chat')
 
