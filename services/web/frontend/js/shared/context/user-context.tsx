@@ -1,35 +1,25 @@
-import { createContext, useContext } from 'react'
+import { createContext, FC, useContext, useMemo } from 'react'
+import getMeta from '../../utils/meta'
+import { LoggedOutUser, User } from '../../../../types/user'
 
-type LLMSettings = {
-  useOwnSettings: boolean
-  modelName: string
-  apiUrl: string
-  hasApiKey: boolean
+export const UserContext = createContext<User | LoggedOutUser | undefined>(
+  undefined
+)
+
+export const UserProvider: FC<React.PropsWithChildren> = ({ children }) => {
+  const user = useMemo(() => getMeta('ol-user'), [])
+
+  return <UserContext.Provider value={user}>{children}</UserContext.Provider>
 }
-
-type SSHKeys = {
-  Public: string
-  Private: string
-}
-
-type UserContextValue = {
-  id?: string
-  email?: string
-  first_name?: string
-  last_name?: string
-  sshkeys?: SSHKeys
-  llmSettings?: LLMSettings
-}
-
-const UserContext = createContext<UserContextValue | undefined>(undefined)
 
 export function useUserContext() {
   const context = useContext(UserContext)
-  if (context === undefined) {
-    throw new Error('useUserContext must be used within a UserProvider')
+
+  if (!context) {
+    throw new Error(
+      'useUserContext is only available inside UserContext, or `ol-user` meta is not defined'
+    )
   }
+
   return context
 }
-
-export { UserContext }
-export type { UserContextValue, LLMSettings, SSHKeys }
