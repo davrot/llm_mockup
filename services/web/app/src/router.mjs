@@ -22,6 +22,7 @@ import UserInfoController from './Features/User/UserInfoController.mjs'
 import UserController from './Features/User/UserController.mjs'
 import UserEmailsController from './Features/User/UserEmailsController.mjs'
 import UserPagesController from './Features/User/UserPagesController.mjs'
+import UserLLMSettingsController from './Features/User/UserLLMSettingsController.mjs'
 import TutorialController from './Features/Tutorial/TutorialController.mjs'
 import DocumentController from './Features/Documents/DocumentController.mjs'
 import CompileManager from './Features/Compile/CompileManager.mjs'
@@ -307,6 +308,16 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
     '/user/settings',
     AuthenticationController.requireLogin(),
     UserController.updateUserSettings
+  )
+  webRouter.post(
+    '/user/llm-settings/check',
+    AuthenticationController.requireLogin(),
+    UserLLMSettingsController.checkLLMConnection
+  )
+  webRouter.post(
+    '/user/llm-settings',
+    AuthenticationController.requireLogin(),
+    UserLLMSettingsController.saveLLMSettings
   )
   webRouter.post(
     '/user/password/update',

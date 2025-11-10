@@ -149,6 +149,12 @@ async function settingsPage(req, res) {
         Public: user.sshPublicKey,
         Private: user.sshPrivateKey,
       },
+      llmSettings: {
+        useOwnSettings: user.useOwnLLMSettings,
+        modelName: user.llmModelName,
+        apiUrl: user.llmApiUrl,
+        hasApiKey: Boolean(user.llmApiKey)
+      },
     },
     labsExperiments: user.labsExperiments ?? [],
     hasPassword: !!user.hashedPassword,
