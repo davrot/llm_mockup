@@ -54,13 +54,30 @@ async function chat(req, res) {
   let llmApiUrl = process.env.LLM_API_URL
   let llmApiKey = process.env.LLM_API_KEY
   let userAvailableModels = null
+  let usingUserSettings = false
 
   if (userId) {
     try {
       const user = await User.findById(userId, 'useOwnLLMSettings llmApiUrl llmApiKey llmModelName')
-      if (user && user.useOwnLLMSettings && user.llmApiUrl && user.llmApiKey) {
+      if (user && user.useOwnLLMSettings) {
+        // User wants to use their own settings, check if they're complete
+        if (!user.llmApiUrl || !user.llmApiKey) {
+          logger.error({ 
+            projectId, 
+            userId,
+            hasApiUrl: !!user.llmApiUrl,
+            hasApiKey: !!user.llmApiKey,
+            hasModelName: !!user.llmModelName
+          }, '[LLMChat] User LLM settings incomplete')
+          return res.status(400).json({ 
+            error: 'Your LLM settings are incomplete. Please configure API URL, API Key, and Model Name in your account settings.' 
+          })
+        }
+        
         llmApiUrl = user.llmApiUrl
         llmApiKey = user.llmApiKey
+        usingUserSettings = true
+        
         // If user has a model name, make it available
         if (user.llmModelName) {
           userAvailableModels = [{ id: user.llmModelName, name: user.llmModelName, isDefault: true }]
@@ -80,14 +97,27 @@ async function chat(req, res) {
     }
   }
 
-  if (!llmApiUrl || !llmApiKey) {
-    logger.error('[LLMChat] Missing LLM_API_URL or LLM_API_KEY')
-    return res.status(500).json({ error: 'LLM service not configured' })
+  // If not using user settings, verify environment variables are configured
+  if (!usingUserSettings && (!llmApiUrl || !llmApiKey)) {
+    logger.error({ 
+      projectId, 
+      userId,
+      hasEnvApiUrl: !!process.env.LLM_API_URL,
+      hasEnvApiKey: !!process.env.LLM_API_KEY
+    }, '[LLMChat] LLM service not configured')
+    return res.status(503).json({ 
+      error: 'LLM service is not configured. Please contact your administrator or configure your own LLM settings in your account settings.' 
+    })
   }
 
   // Validate model if provided
   const availableModels = userAvailableModels || getAvailableModels()
-  const selectedModel = model || availableModels[0].id
+  const selectedModel = model || availableModels[0]?.id
+  
+  if (!selectedModel) {
+    logger.error({ projectId, userId }, '[LLMChat] No model available')
+    return res.status(400).json({ error: 'No LLM model configured. Please configure a model name in your account settings.' })
+  }
   
   if (!availableModels.find(m => m.id === selectedModel)) {
     logger.error({ projectId, userId, selectedModel }, '[LLMChat] Invalid model selected')

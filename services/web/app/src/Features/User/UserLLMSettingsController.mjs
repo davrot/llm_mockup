@@ -132,6 +132,32 @@ async function saveLLMSettings(req, res) {
   )
 
   try {
+    // If user is enabling their own LLM settings, validate required fields
+    if (useOwnLLMSettings) {
+      // Get current user to check if they have an existing API key
+      const currentUser = await User.findById(userId, 'llmApiKey')
+      const hasExistingApiKey = currentUser && currentUser.llmApiKey
+      
+      // Validate that all required fields are provided
+      if (!llmApiUrl || !llmModelName) {
+        logger.error({ userId, hasApiUrl: !!llmApiUrl, hasModelName: !!llmModelName }, 
+          '[UserLLMSettings] Missing required fields')
+        return res.status(400).json({
+          success: false,
+          error: 'API URL and Model Name are required when enabling custom LLM settings',
+        })
+      }
+      
+      // API key is required only if user doesn't have one already
+      if (!hasExistingApiKey && (!llmApiKey || llmApiKey.trim() === '')) {
+        logger.error({ userId }, '[UserLLMSettings] Missing API key for new configuration')
+        return res.status(400).json({
+          success: false,
+          error: 'API Key is required when enabling custom LLM settings',
+        })
+      }
+    }
+
     const updateData = {
       useOwnLLMSettings: Boolean(useOwnLLMSettings),
       llmModelName: llmModelName || '',
