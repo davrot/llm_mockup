@@ -131,15 +131,15 @@
 }
 
 .llm-action-button {
-  background: none;
-  border: 1px solid transparent;
+  background: rgba(0, 0, 0, 0.05);  // Give it a subtle background
+  border: 1px solid var(--llm-chat-new-message-textarea-border);  // Use the border color from chat
   padding: var(--spacing-02);
   cursor: pointer;
   border-radius: var(--border-radius-base);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--content-secondary);
+  color: var(--llm-chat-color);  // Changed from --content-secondary to --llm-chat-color
   transition: all 0.2s ease;
 
   &:hover {

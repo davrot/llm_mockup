@@ -199,17 +199,43 @@ export const useLLMChat = () => {
   }, [])
 
   const rerunLastMessage = useCallback(() => {
-    if (lastUserMessage) {
-      console.log('[LLMChat] Rerunning last message:', lastUserMessage)
-      // Remove the last assistant response if it exists
-      const lastMsg = messagesRef.current[messagesRef.current.length - 1]
-      if (lastMsg?.role === 'assistant') {
-        setMessages(messagesRef.current.slice(0, -2)) // Remove last user + assistant messages
-      }
-      // Resend the message
-      setTimeout(() => sendMessage(lastUserMessage), 100)
+    if (!lastUserMessage) {
+      console.log('[LLMChat] No last message to rerun')
+      return
     }
-  }, [lastUserMessage, sendMessage])
+
+    console.log('[LLMChat] Rerunning last message:', lastUserMessage)
+    
+    // Find the last occurrence of the user message
+    const currentMessages = messagesRef.current
+    let foundIndex = -1
+    
+    for (let i = currentMessages.length - 1; i >= 0; i--) {
+      if (currentMessages[i].role === 'user' && currentMessages[i].content === lastUserMessage) {
+        foundIndex = i
+        break
+      }
+    }
+    
+    if (foundIndex === -1) {
+      console.log('[LLMChat] Could not find last user message in history')
+      // Just resend without removing anything
+      sendMessage(lastUserMessage)
+      return
+    }
+    
+    // Remove the user message and everything after it (including assistant responses)
+    const messagesBeforeRerun = currentMessages.slice(0, foundIndex)
+    console.log('[LLMChat] Removing', currentMessages.length - foundIndex, 'messages before rerun')
+    
+    setMessages(messagesBeforeRerun)
+    
+    // Wait a tick to ensure state is updated, then resend
+    setTimeout(() => {
+      console.log('[LLMChat] Resending message with current model:', selectedModel)
+      sendMessage(lastUserMessage)
+    }, 50)
+  }, [lastUserMessage, sendMessage, selectedModel])
 
   const clearMessages = useCallback(() => {
     console.log('[LLMChat] Clearing messages')
