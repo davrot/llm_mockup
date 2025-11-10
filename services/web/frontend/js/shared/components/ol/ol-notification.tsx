@@ -1,21 +1,11 @@
-import React from 'react'
+import Notification from '@/shared/components/notification'
 
-type OLNotificationProps = {
-  type: 'success' | 'error' | 'warning' | 'info'
-  content: string
-}
-
-export default function OLNotification({ type, content }: OLNotificationProps) {
-  const alertClass = {
-    success: 'alert-success',
-    error: 'alert-danger',
-    warning: 'alert-warning',
-    info: 'alert-info',
-  }[type]
-  
+function OLNotification(props: React.ComponentProps<typeof Notification>) {
   return (
-    <div className={`alert ${alertClass}`} role="alert">
-      {content}
+    <div className="notification-list">
+      <Notification {...props} />
     </div>
   )
 }
+
+export default OLNotification

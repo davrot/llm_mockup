@@ -1,14 +1,8 @@
-import React from 'react'
+import { FormGroupProps } from 'react-bootstrap'
+import FormGroup from '@/shared/components/form/form-group'
 
-type OLFormGroupProps = {
-  controlId?: string
-  children: React.ReactNode
+function OLFormGroup(props: FormGroupProps) {
+  return <FormGroup {...props} />
 }
 
-export default function OLFormGroup({ controlId, children }: OLFormGroupProps) {
-  return (
-    <div className="form-group" id={controlId}>
-      {children}
-    </div>
-  )
-}
+export default OLFormGroup

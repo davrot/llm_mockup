@@ -1,40 +1,28 @@
-import React from 'react'
+import { forwardRef } from 'react'
+import FormControl, {
+  type OLBS5FormControlProps,
+} from '@/shared/components/form/form-control'
+import OLSpinner from '@/shared/components/ol/ol-spinner'
 
-type OLFormControlProps = {
-  type: string
-  value?: string
-  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
-  onInvalid?: (event: React.InvalidEvent<HTMLInputElement>) => void
-  placeholder?: string
-  required?: boolean
-  readOnly?: boolean
-  maxLength?: number
-  'data-ol-dirty'?: boolean
+type OLFormControlProps = OLBS5FormControlProps & {
+  'data-ol-dirty'?: unknown
+  'main-field'?: any // For the CM6's benefit in the editor search panel
+  loading?: boolean
 }
 
-export default function OLFormControl({
-  type,
-  value,
-  onChange,
-  onInvalid,
-  placeholder,
-  required = false,
-  readOnly = false,
-  maxLength,
-  ...props
-}: OLFormControlProps) {
-  return (
-    <input
-      className="form-control"
-      type={type}
-      value={value}
-      onChange={onChange}
-      onInvalid={onInvalid}
-      placeholder={placeholder}
-      required={required}
-      readOnly={readOnly}
-      maxLength={maxLength}
-      {...props}
-    />
-  )
-}
+const OLFormControl = forwardRef<HTMLInputElement, OLFormControlProps>(
+  (props, ref) => {
+    const { append, ...rest } = props
+
+    return (
+      <FormControl
+        ref={ref}
+        {...rest}
+        append={rest.loading ? <OLSpinner size="sm" /> : append}
+      />
+    )
+  }
+)
+OLFormControl.displayName = 'OLFormControl'
+
+export default OLFormControl

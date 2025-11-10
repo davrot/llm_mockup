@@ -1,14 +1,7 @@
-import React from 'react'
+import { Form } from 'react-bootstrap'
 
-type OLFormLabelProps = {
-  htmlFor?: string
-  children: React.ReactNode
+function OLFormLabel(props: React.ComponentProps<(typeof Form)['Label']>) {
+  return <Form.Label {...props} />
 }
 
-export default function OLFormLabel({ htmlFor, children }: OLFormLabelProps) {
-  return (
-    <label className="form-label" htmlFor={htmlFor}>
-      {children}
-    </label>
-  )
-}
+export default OLFormLabel

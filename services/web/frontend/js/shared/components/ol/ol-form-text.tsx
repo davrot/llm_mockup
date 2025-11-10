@@ -1,16 +1,7 @@
-import React from 'react'
+import FormText, { FormTextProps } from '@/shared/components/form/form-text'
 
-type OLFormTextProps = {
-  type?: 'error' | 'info' | 'warning'
-  children: React.ReactNode
+function OLFormText({ as = 'div', ...rest }: FormTextProps) {
+  return <FormText {...rest} as={as} />
 }
 
-export default function OLFormText({ type = 'info', children }: OLFormTextProps) {
-  const className = type === 'error' ? 'text-danger' : 'text-muted'
-  
-  return (
-    <small className={className}>
-      {children}
-    </small>
-  )
-}
+export default OLFormText
