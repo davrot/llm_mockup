@@ -19,7 +19,9 @@ const LLMChatPane = React.memo(function LLMChatPane() {
     models, 
     selectedModel, 
     setSelectedModel,
-    canRerun
+    canRerun,
+    modelsLoaded,
+    hasModels
   } = useLLMChat()
   const [inputValue, setInputValue] = useState('')
 
@@ -52,12 +54,18 @@ const LLMChatPane = React.memo(function LLMChatPane() {
     }
   }
 
+  // If no models are available and models have been loaded, don't render
+  if (modelsLoaded && !hasModels) {
+    console.log('[LLMChat] No models available, hiding AI Assistant tab')
+    return null
+  }
+
   if (!chatOpenedOnce) {
     return null
   }
 
   const displayMessages = messages.filter(m => m.role !== 'system')
-  const showModelSelector = models.length > 1
+  const showModelSelector = models.length > 0
 
   return (
     <aside className="chat" aria-label={t('ai_assistant')}>

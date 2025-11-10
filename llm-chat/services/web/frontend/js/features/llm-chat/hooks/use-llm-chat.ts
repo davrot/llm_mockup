@@ -10,6 +10,8 @@ interface LLMModel {
   id: string
   name: string
   isDefault: boolean
+  isPersonal?: boolean
+  label?: string
 }
 
 interface LLMResponse {
@@ -79,6 +81,7 @@ export const useLLMChat = () => {
   const [models, setModels] = useState<LLMModel[]>([])
   const [selectedModel, setSelectedModel] = useState<string>('')
   const [lastUserMessage, setLastUserMessage] = useState<string>('')
+  const [modelsLoaded, setModelsLoaded] = useState(false)
 
   // AbortController for cancelling requests
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -93,14 +96,24 @@ export const useLLMChat = () => {
       try {
         const response = await fetch(`/project/${projectId}/llm/models`)
         const data = await response.json()
-        setModels(data.models)
-        const defaultModel = data.models.find((m: LLMModel) => m.isDefault) || data.models[0]
+        console.log('[LLMChat] Raw models data from backend:', data)
+        setModels(data.models || [])
+        
+        // Find default model or use first available
+        const defaultModel = (data.models || []).find((m: LLMModel) => m.isDefault) || (data.models || [])[0]
         setSelectedModel(defaultModel?.id || '')
+        
         console.log('[LLMChat] Available models:', data.models)
+        console.log('[LLMChat] Selected model:', defaultModel?.id)
       } catch (err) {
         console.error('[LLMChat] Failed to fetch models:', err)
+        setModels([])
+        setSelectedModel('')
+      } finally {
+        setModelsLoaded(true)
       }
     }
+    
     fetchModels()
   }, [projectId])
 
@@ -272,5 +285,7 @@ export const useLLMChat = () => {
     selectedModel,
     setSelectedModel,
     canRerun: !!lastUserMessage,
+    modelsLoaded,
+    hasModels: models.length > 0,
   }
 }
