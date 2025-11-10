@@ -77,19 +77,29 @@
   color: var(--llm-chat-color);
 }
 
+// NEW: Header container with model selector and action buttons
+.llm-chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-03) var(--spacing-04);
+  background-color: var(--llm-chat-new-message-bg);
+  border-bottom: 1px solid var(--llm-chat-new-message-border);
+  gap: var(--spacing-03);
+}
+
 .llm-model-selector {
   display: flex;
   align-items: center;
   gap: var(--spacing-03);
-  padding: var(--spacing-03) var(--spacing-04);
-  background-color: var(--llm-chat-new-message-bg);
-  border-bottom: 1px solid var(--llm-chat-new-message-border);
+  flex: 1;
 
   label {
     font-size: var(--font-size-02);
     font-weight: 600;
     color: var(--llm-chat-color);
     margin: 0;
+    white-space: nowrap;
   }
 
   select {
@@ -110,6 +120,40 @@
       opacity: 0.6;
       cursor: not-allowed;
     }
+  }
+}
+
+// NEW: Action buttons container
+.llm-action-buttons {
+  display: flex;
+  gap: var(--spacing-02);
+  align-items: center;
+}
+
+.llm-action-button {
+  background: none;
+  border: 1px solid transparent;
+  padding: var(--spacing-02);
+  cursor: pointer;
+  border-radius: var(--border-radius-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--content-secondary);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--bg-light-tertiary);
+    color: var(--content-primary);
+    border-color: var(--border-secondary);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  .material-symbols {
+    font-size: 18px;
   }
 }
 
@@ -379,6 +423,7 @@
       justify-content: flex-start;
     }
 
+    // UPDATED: Loading indicator with stop button
     .llm-message-loading {
       display: flex;
       align-items: center;
@@ -390,14 +435,45 @@
       color: var(--llm-chat-message-assistant-text);
 
       .loading-icon {
-        animation: pulse 1.5s ease-in-out infinite;
+        animation: spin 2s linear infinite;
         color: var(--llm-chat-message-assistant-text);
       }
 
       span {
+        flex: 1;
         color: var(--llm-chat-message-assistant-text);
       }
     }
+  }
+}
+
+// NEW: Stop button styling
+.llm-stop-button {
+  background-color: var(--alert-danger-bg);
+  border: 1px solid var(--alert-danger-border);
+  color: var(--alert-danger);
+  padding: var(--spacing-02) var(--spacing-04);
+  border-radius: var(--border-radius-base);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-02);
+  font-size: var(--font-size-01);
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: var(--alert-danger);
+    color: var(--white);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  .material-symbols {
+    font-size: 16px;
   }
 }
 
@@ -480,5 +556,15 @@
   }
   50% {
     opacity: 0.5;
+  }
+}
+
+// NEW: Spin animation for loading icon
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }

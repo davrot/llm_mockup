@@ -1,5 +1,5 @@
 import { useLayoutContext } from '@/shared/context/layout-context'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { ImperativePanelHandle } from 'react-resizable-panels'
 
 export const useLLMChatPane = () => {
@@ -7,38 +7,13 @@ export const useLLMChatPane = () => {
   const [resizing, setResizing] = useState(false)
   const panelRef = useRef<ImperativePanelHandle>(null)
 
-  // Manually control panel expansion/collapse based on state
-  useEffect(() => {
-    const panel = panelRef.current
-    if (!panel) return
-
-    console.log('[useLLMChatPane] State changed to:', isOpen)
-    
-    if (isOpen) {
-      panel.expand()
-    } else {
-      panel.collapse()
-    }
-  }, [isOpen])
+  // REMOVED the useEffect that was calling panel.expand() and panel.collapse()
+  // This was causing the coupling issue
 
   const togglePane = useCallback(() => {
     console.log('[useLLMChatPane] Toggling LLM chat from', isOpen, 'to', !isOpen)
     setIsOpen(value => !value)
   }, [setIsOpen, isOpen])
-
-  const handlePaneExpand = useCallback(() => {
-    console.log('[useLLMChatPane] LLM chat expand callback called')
-    if (!isOpen) {
-      setIsOpen(true)
-    }
-  }, [isOpen, setIsOpen])
-
-  const handlePaneCollapse = useCallback(() => {
-    console.log('[useLLMChatPane] LLM chat collapse callback called')
-    if (isOpen) {
-      setIsOpen(false)
-    }
-  }, [isOpen, setIsOpen])
 
   return {
     isOpen,
@@ -46,7 +21,5 @@ export const useLLMChatPane = () => {
     resizing,
     setResizing,
     togglePane,
-    handlePaneExpand,
-    handlePaneCollapse,
   }
 }

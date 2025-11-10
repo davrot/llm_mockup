@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { getJSON, postJSON } from '@/infrastructure/fetch-json'
 import getMeta from '@/utils/meta'
 
 interface Message {
@@ -92,9 +91,10 @@ export const useLLMChat = () => {
   useEffect(() => {
     async function fetchModels() {
       try {
-        const data = await getJSON<{ models: LLMModel[] }>(`/project/${projectId}/llm/models`)
+        const response = await fetch(`/project/${projectId}/llm/models`)
+        const data = await response.json()
         setModels(data.models)
-        const defaultModel = data.models.find(m => m.isDefault) || data.models[0]
+        const defaultModel = data.models.find((m: LLMModel) => m.isDefault) || data.models[0]
         setSelectedModel(defaultModel?.id || '')
         console.log('[LLMChat] Available models:', data.models)
       } catch (err) {
@@ -127,23 +127,38 @@ export const useLLMChat = () => {
       const url = `/project/${projectId}/llm/chat`
       console.log('[LLMChat] Request URL:', url)
       
-      const response = await postJSON<LLMResponse>(url, {
-        body: {
+      // Get CSRF token from meta tag
+      const csrfToken = getMeta('ol-csrfToken')
+      
+      // Use fetch directly with AbortController signal
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
+        body: JSON.stringify({
           messages: newMessages,
           model: selectedModel
-        },
-        signal: abortControllerRef.current.signal
+        }),
+        signal: abortControllerRef.current.signal,
+        credentials: 'same-origin'
       })
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data: LLMResponse = await response.json()
       console.log('[LLMChat] Response received successfully')
 
-      if (!response.choices || !response.choices[0]) {
+      if (!data.choices || !data.choices[0]) {
         throw new Error('Invalid response format from LLM API')
       }
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: response.choices[0].message.content
+        content: data.choices[0].message.content
       }
 
       console.log('[LLMChat] Assistant response received')

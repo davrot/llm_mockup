@@ -9,7 +9,18 @@ import remarkGfm from 'remark-gfm'
 const LLMChatPane = React.memo(function LLMChatPane() {
   const { t } = useTranslation()
   const { llmChatIsOpen } = useLayoutContext()
-  const { messages, isLoading, sendMessage, models, selectedModel, setSelectedModel } = useLLMChat()
+  const { 
+    messages, 
+    isLoading, 
+    sendMessage, 
+    stopGeneration,
+    rerunLastMessage,
+    clearMessages,
+    models, 
+    selectedModel, 
+    setSelectedModel,
+    canRerun
+  } = useLLMChat()
   const [inputValue, setInputValue] = useState('')
 
   const [chatOpenedOnce, setChatOpenedOnce] = useState(llmChatIsOpen)
@@ -27,6 +38,20 @@ const LLMChatPane = React.memo(function LLMChatPane() {
     }
   }
 
+  const handleStop = () => {
+    stopGeneration()
+  }
+
+  const handleRerun = () => {
+    rerunLastMessage()
+  }
+
+  const handleClear = () => {
+    if (confirm('Clear all messages?')) {
+      clearMessages()
+    }
+  }
+
   if (!chatOpenedOnce) {
     return null
   }
@@ -37,24 +62,52 @@ const LLMChatPane = React.memo(function LLMChatPane() {
   return (
     <aside className="chat" aria-label={t('ai_assistant')}>
       <div className="llm-chat-container">
-        {/* Model Selector Header - only shown if multiple models */}
-        {showModelSelector && (
-          <div className="llm-model-selector">
-            <label htmlFor="model-select">Model:</label>
-            <select
-              id="model-select"
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              disabled={isLoading}
-            >
-              {models.map(model => (
-                <option key={model.id} value={model.id}>
-                  {model.name}
-                </option>
-              ))}
-            </select>
+        {/* Header with Model Selector and Action Buttons */}
+        <div className="llm-chat-header">
+          {showModelSelector && (
+            <div className="llm-model-selector">
+              <label htmlFor="model-select">Model:</label>
+              <select
+                id="model-select"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                disabled={isLoading}
+              >
+                {models.map(model => (
+                  <option key={model.id} value={model.id}>
+                    {model.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          
+          <div className="llm-action-buttons">
+            {/* Re-run button - only show if we have a previous message */}
+            {canRerun && !isLoading && (
+              <button
+                type="button"
+                onClick={handleRerun}
+                className="llm-action-button"
+                title="Re-run last question"
+              >
+                <MaterialIcon type="refresh" />
+              </button>
+            )}
+            
+            {/* Clear button - only show if we have messages */}
+            {displayMessages.length > 0 && !isLoading && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="llm-action-button"
+                title="Clear conversation"
+              >
+                <MaterialIcon type="delete" />
+              </button>
+            )}
           </div>
-        )}
+        </div>
 
         {displayMessages.length === 0 ? (
           <div className="llm-chat-welcome">
@@ -90,6 +143,14 @@ const LLMChatPane = React.memo(function LLMChatPane() {
                   <div className="llm-message-loading">
                     <MaterialIcon type="smart_toy" className="loading-icon" />
                     <span>Thinking...</span>
+                    <button
+                      type="button"
+                      onClick={handleStop}
+                      className="llm-stop-button"
+                      title="Stop generation"
+                    >
+                      <MaterialIcon type="stop" />
+                    </button>
                   </div>
                 </div>
               </div>

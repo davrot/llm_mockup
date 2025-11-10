@@ -45,8 +45,6 @@ export const MainLayout: FC = () => {
     togglePane: toggleChat,
     resizing: chatResizing,
     setResizing: setChatResizing,
-    handlePaneCollapse: handleChatCollapse,
-    handlePaneExpand: handleChatExpand,
   } = useChatPane()
 
   const {
@@ -55,8 +53,6 @@ export const MainLayout: FC = () => {
     togglePane: toggleLLMChat,
     resizing: llmChatResizing,
     setResizing: setLLMChatResizing,
-    handlePaneCollapse: handleLLMChatCollapse,
-    handlePaneExpand: handleLLMChatExpand,
   } = useLLMChatPane()
 
   const chatEnabled =
@@ -122,58 +118,48 @@ export const MainLayout: FC = () => {
                 <EditorAndPdf />
               </Panel>
 
-              {/* LLM Chat panel */}
-              {chatEnabled && llmChatIsOpen && (
-                <HorizontalResizeHandle
-                  onDoubleClick={toggleLLMChat}
-                  resizable={llmChatIsOpen}
-                  onDragging={setLLMChatResizing}
-                  hitAreaMargins={{ coarse: 0, fine: 0 }}
-                />
+              {/* LLM Chat - only render when open */}
+              {!isRestrictedTokenMember && llmChatIsOpen && (
+                <>
+                  <HorizontalResizeHandle
+                    onDoubleClick={toggleLLMChat}
+                    resizable={true}
+                    onDragging={setLLMChatResizing}
+                    hitAreaMargins={{ coarse: 0, fine: 0 }}
+                  />
+                  <Panel
+                    ref={llmChatPanelRef}
+                    id="panel-llm-chat"
+                    order={2}
+                    defaultSize={20}
+                    minSize={5}
+                    maxSize={30}
+                  >
+                    <LLMChatPane />
+                  </Panel>
+                </>
               )}
 
-              {chatEnabled && (
-                <Panel
-                  ref={llmChatPanelRef}
-                  id="panel-llm-chat"
-                  order={2}
-                  defaultSize={20}
-                  minSize={5}
-                  maxSize={30}
-                  collapsible
-                  collapsedSize={0}
-                  onCollapse={handleLLMChatCollapse}
-                  onExpand={handleLLMChatExpand}
-                >
-                  <LLMChatPane />
-                </Panel>
-              )}
-
-              {/* Regular chat */}
+              {/* Regular chat - only render when open */}
               {chatEnabled && chatIsOpen && (
-                <HorizontalResizeHandle
-                  onDoubleClick={toggleChat}
-                  resizable={chatIsOpen}
-                  onDragging={setChatResizing}
-                  hitAreaMargins={{ coarse: 0, fine: 0 }}
-                />
-              )}
-
-              {chatEnabled && (
-                <Panel
-                  ref={chatPanelRef}
-                  id="panel-chat"
-                  order={3}
-                  defaultSize={20}
-                  minSize={5}
-                  maxSize={30}
-                  collapsible
-                  collapsedSize={0}
-                  onCollapse={handleChatCollapse}
-                  onExpand={handleChatExpand}
-                >
-                  <ChatPane />
-                </Panel>
+                <>
+                  <HorizontalResizeHandle
+                    onDoubleClick={toggleChat}
+                    resizable={true}
+                    onDragging={setChatResizing}
+                    hitAreaMargins={{ coarse: 0, fine: 0 }}
+                  />
+                  <Panel
+                    ref={chatPanelRef}
+                    id="panel-chat"
+                    order={3}
+                    defaultSize={20}
+                    minSize={5}
+                    maxSize={30}
+                  >
+                    <ChatPane />
+                  </Panel>
+                </>
               )}
             </PanelGroup>
           </Panel>

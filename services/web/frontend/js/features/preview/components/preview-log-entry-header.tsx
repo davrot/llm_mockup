@@ -33,7 +33,7 @@ function PreviewLogEntryHeader({
   const logLocationSpanRef = useRef<HTMLSpanElement>(null)
   const [locationSpanOverflown, setLocationSpanOverflown] = useState(false)
   const { setLLMChatIsOpen } = useLayoutContext()
-  const { getCurrentDocValue, getCurrentDocumentId } = useEditorManagerContext()
+  const { getCurrentDocValue, getCurrentDocName } = useEditorManagerContext()
 
   useResizeObserver(
     logLocationSpanRef,
@@ -75,8 +75,29 @@ function PreviewLogEntryHeader({
       
       // Get source code context if we have file and line information
       if (file && line && typeof line === 'number') {
-        const currentDocId = getCurrentDocumentId?.()
-        const isCurrentFile = currentDocId && file.includes(currentDocId)
+        const currentDocName = getCurrentDocName?.()
+        
+        // Normalize file paths for comparison
+        const normalizeFilePath = (path: string) => {
+          // Remove leading ./ and normalize slashes
+          return path.replace(/^\.\//, '').replace(/\\/g, '/')
+        }
+        
+        // Debug logging
+        console.log('[AskAI] Debug - file:', file)
+        console.log('[AskAI] Debug - currentDocName:', currentDocName)
+        
+        const normalizedFile = normalizeFilePath(file)
+        const normalizedCurrentDoc = currentDocName ? normalizeFilePath(currentDocName) : null
+        
+        // Check if this error is for the currently open document
+        const isCurrentFile = normalizedCurrentDoc && (
+          normalizedFile === normalizedCurrentDoc ||
+          normalizedFile.endsWith('/' + normalizedCurrentDoc) ||
+          normalizedCurrentDoc.endsWith('/' + normalizedFile)
+        )
+        
+        console.log('[AskAI] Debug - isCurrentFile:', isCurrentFile)
         
         if (isCurrentFile) {
           const docContent = getCurrentDocValue?.()
@@ -97,6 +118,7 @@ function PreviewLogEntryHeader({
             }
             
             sourceContext = contextLines.join('\n')
+            console.log('[AskAI] Source context extracted:', sourceContext.length, 'chars')
           }
         }
       }
@@ -111,7 +133,7 @@ function PreviewLogEntryHeader({
         content: logEntry?.content
       }, sourceContext)
       
-      console.log('[AskAI] Sending error to LLM chat')
+      console.log('[AskAI] Sending error to LLM chat, context included:', sourceContext.length > 0)
       
       window.dispatchEvent(new CustomEvent('llm-chat-send-message', {
         detail: { message: errorMessage }
@@ -135,7 +157,7 @@ function PreviewLogEntryHeader({
       }))
       setLLMChatIsOpen(true)
     }
-  }, [file, line, headerTitle, level, logEntry, getCurrentDocValue, getCurrentDocumentId, setLLMChatIsOpen])
+  }, [file, line, headerTitle, level, logEntry, getCurrentDocValue, getCurrentDocName, setLLMChatIsOpen])
 
   const locationLinkText =
     showSourceLocationLink && file ? `${file}${line ? `, ${line}` : ''}` : null
@@ -249,4 +271,3 @@ function formatErrorForLLM(logEntry: any, sourceContext: string): string {
 }
 
 export default PreviewLogEntryHeader
-

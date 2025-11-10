@@ -84,8 +84,8 @@ const ToolbarHeader = React.memo(function ToolbarHeader({
   hasRenamePermissions,
   openShareModal,
   trackChangesVisible,
-  llmChatIsOpen,        // ADD THIS
-  toggleLLMChatOpen,    // ADD THIS
+  llmChatIsOpen,
+  toggleLLMChatOpen,
 }: ToolbarHeaderProps) {
   const chatEnabled = getMeta('ol-capabilities')?.includes('chat')
 
@@ -149,13 +149,15 @@ const ToolbarHeader = React.memo(function ToolbarHeader({
 
             <LayoutDropdownButton />
 
-            {chatEnabled && chatVisible && (
+            {/* LLM Chat button - independent of regular chat */}
+            {!isRestrictedTokenMember && (
               <LLMChatToggleButton
                 llmChatIsOpen={llmChatIsOpen}
                 onClick={toggleLLMChatOpen}
               />
             )}
 
+            {/* Regular chat button - only shown when chat is enabled */}
             {chatEnabled && chatVisible && (
               <ChatToggleButton
                 chatIsOpen={chatIsOpen}

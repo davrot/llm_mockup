@@ -13,7 +13,7 @@ interface AskAIButtonProps {
 function PdfLogEntryAskAIButton({ logEntry }: AskAIButtonProps) {
   const { t } = useTranslation()
   const { setLLMChatIsOpen } = useLayoutContext()
-  const { getCurrentDocValue, getCurrentDocumentId } = useEditorManagerContext()
+  const { getCurrentDocValue, getCurrentDocName } = useEditorManagerContext()
 
   // DEBUG: Log when component renders
   console.log('[PdfLogEntryAskAIButton] Rendering:', {
@@ -30,9 +30,29 @@ function PdfLogEntryAskAIButton({ logEntry }: AskAIButtonProps) {
       
       // Get source code context if we have file and line information
       if (logEntry.file && logEntry.line && typeof logEntry.line === 'number') {
-        // Try to get the document content
-        const currentDocId = getCurrentDocumentId?.()
-        const isCurrentFile = currentDocId && logEntry.file.includes(currentDocId)
+        const currentDocName = getCurrentDocName?.()
+        
+        // Normalize file paths for comparison
+        const normalizeFilePath = (path: string) => {
+          // Remove leading ./ and normalize slashes
+          return path.replace(/^\.\//, '').replace(/\\/g, '/')
+        }
+        
+        // Debug logging
+        console.log('[PdfLogEntryAskAIButton] Debug - file:', logEntry.file)
+        console.log('[PdfLogEntryAskAIButton] Debug - currentDocName:', currentDocName)
+        
+        const normalizedFile = normalizeFilePath(logEntry.file)
+        const normalizedCurrentDoc = currentDocName ? normalizeFilePath(currentDocName) : null
+        
+        // Check if this error is for the currently open document
+        const isCurrentFile = normalizedCurrentDoc && (
+          normalizedFile === normalizedCurrentDoc ||
+          normalizedFile.endsWith('/' + normalizedCurrentDoc) ||
+          normalizedCurrentDoc.endsWith('/' + normalizedFile)
+        )
+        
+        console.log('[PdfLogEntryAskAIButton] Debug - isCurrentFile:', isCurrentFile)
         
         if (isCurrentFile) {
           const docContent = getCurrentDocValue?.()
@@ -53,6 +73,7 @@ function PdfLogEntryAskAIButton({ logEntry }: AskAIButtonProps) {
             }
             
             sourceContext = contextLines.join('\n')
+            console.log('[PdfLogEntryAskAIButton] Source context extracted:', sourceContext.length, 'chars')
           }
         }
       }
@@ -60,7 +81,7 @@ function PdfLogEntryAskAIButton({ logEntry }: AskAIButtonProps) {
       // Format the error message for the LLM
       const errorMessage = formatErrorForLLM(logEntry, sourceContext)
       
-      console.log('[AskAI] Sending error to LLM chat')
+      console.log('[PdfLogEntryAskAIButton] Sending error to LLM chat, context included:', sourceContext.length > 0)
       
       // Send to LLM chat
       window.dispatchEvent(new CustomEvent('llm-chat-send-message', {
@@ -70,7 +91,7 @@ function PdfLogEntryAskAIButton({ logEntry }: AskAIButtonProps) {
       // Open the LLM chat panel
       setLLMChatIsOpen(true)
     } catch (err) {
-      console.error('[AskAI] Failed to get context:', err)
+      console.error('[PdfLogEntryAskAIButton] Failed to get context:', err)
       
       // Fallback: send without context
       const errorMessage = formatErrorForLLM(logEntry, '')
@@ -79,7 +100,7 @@ function PdfLogEntryAskAIButton({ logEntry }: AskAIButtonProps) {
       }))
       setLLMChatIsOpen(true)
     }
-  }, [logEntry, getCurrentDocValue, getCurrentDocumentId, setLLMChatIsOpen])
+  }, [logEntry, getCurrentDocValue, getCurrentDocName, setLLMChatIsOpen])
 
   // Only show for errors, not warnings or info
   if (logEntry.level !== 'error') {
@@ -155,4 +176,3 @@ function formatErrorForLLM(logEntry: LogEntry, sourceContext: string): string {
 }
 
 export default memo(PdfLogEntryAskAIButton)
-
