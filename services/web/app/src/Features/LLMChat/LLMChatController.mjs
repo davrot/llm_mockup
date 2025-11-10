@@ -1,6 +1,7 @@
 import logger from '@overleaf/logger'
 import fetch from 'node-fetch'
 import { AbortController } from 'abort-controller'
+import { User } from '../../models/User.js'
 
 // Helper function to remove <think> tags
 function stripThinkTags(content) {
@@ -49,13 +50,43 @@ async function chat(req, res) {
     return res.status(400).json({ error: 'Invalid messages format' })
   }
 
-  if (!process.env.LLM_API_URL || !process.env.LLM_API_KEY) {
-    logger.error('[LLMChat] Missing LLM_API_URL or LLM_API_KEY environment variables')
+  // Check if user has their own LLM settings
+  let llmApiUrl = process.env.LLM_API_URL
+  let llmApiKey = process.env.LLM_API_KEY
+  let userAvailableModels = null
+
+  if (userId) {
+    try {
+      const user = await User.findById(userId, 'useOwnLLMSettings llmApiUrl llmApiKey llmModelName')
+      if (user && user.useOwnLLMSettings && user.llmApiUrl && user.llmApiKey) {
+        llmApiUrl = user.llmApiUrl
+        llmApiKey = user.llmApiKey
+        // If user has a model name, make it available
+        if (user.llmModelName) {
+          userAvailableModels = [{ id: user.llmModelName, name: user.llmModelName, isDefault: true }]
+        }
+        logger.info({ 
+          projectId, 
+          userId,
+          usingUserSettings: true 
+        }, '[LLMChat] Using user\'s own LLM settings')
+      }
+    } catch (error) {
+      logger.warn({ 
+        projectId, 
+        userId, 
+        err: error 
+      }, '[LLMChat] Error fetching user LLM settings, falling back to environment')
+    }
+  }
+
+  if (!llmApiUrl || !llmApiKey) {
+    logger.error('[LLMChat] Missing LLM_API_URL or LLM_API_KEY')
     return res.status(500).json({ error: 'LLM service not configured' })
   }
 
   // Validate model if provided
-  const availableModels = getAvailableModels()
+  const availableModels = userAvailableModels || getAvailableModels()
   const selectedModel = model || availableModels[0].id
   
   if (!availableModels.find(m => m.id === selectedModel)) {
@@ -69,12 +100,12 @@ async function chat(req, res) {
   }, 300000) // 5 minutes (300 seconds) - well under the 10 min proxy timeout
 
   try {
-    const llmApiUrl = `${process.env.LLM_API_URL}/chat/completions`
+    const llmApiFullUrl = `${llmApiUrl}/chat/completions`
     
     logger.info({ 
       projectId,
       userId,
-      url: llmApiUrl,
+      url: llmApiFullUrl,
       model: selectedModel,
       messageCount: messages.length 
     }, '[LLMChat] Sending request to LLM API')
@@ -88,11 +119,11 @@ async function chat(req, res) {
 
     const startTime = Date.now()
     
-    const response = await fetch(llmApiUrl, {
+    const response = await fetch(llmApiFullUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.LLM_API_KEY}`
+        'Authorization': `Bearer ${llmApiKey}`
       },
       body: JSON.stringify(requestBody),
       signal: controller.signal
