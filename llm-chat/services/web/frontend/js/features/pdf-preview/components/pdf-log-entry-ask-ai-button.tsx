@@ -4,6 +4,7 @@ import OLTooltip from '@/shared/components/ol/ol-tooltip'
 import OLIconButton from '@/shared/components/ol/ol-icon-button'
 import { useLayoutContext } from '@/shared/context/layout-context'
 import { useEditorManagerContext } from '@/features/ide-react/context/editor-manager-context'
+import { useLLMChat } from '@/features/llm-chat/hooks/use-llm-chat'
 import type { LogEntry } from '../util/types'
 
 interface AskAIButtonProps {
@@ -14,6 +15,7 @@ function PdfLogEntryAskAIButton({ logEntry }: AskAIButtonProps) {
   const { t } = useTranslation()
   const { setLLMChatIsOpen } = useLayoutContext()
   const { getCurrentDocValue, getCurrentDocName } = useEditorManagerContext()
+  const { modelsLoaded, hasModels } = useLLMChat()
 
   // DEBUG: Log when component renders
   console.log('[PdfLogEntryAskAIButton] Rendering:', {
@@ -21,7 +23,9 @@ function PdfLogEntryAskAIButton({ logEntry }: AskAIButtonProps) {
     message: logEntry.message,
     file: logEntry.file,
     line: logEntry.line,
-    willShow: logEntry.level === 'error'
+    modelsLoaded,
+    hasModels,
+    willShow: logEntry.level === 'error' && modelsLoaded && hasModels
   })
 
   const handleAskAI = useCallback(async () => {
@@ -71,7 +75,6 @@ function PdfLogEntryAskAIButton({ logEntry }: AskAIButtonProps) {
                 `${marker}${lineNum.toString().padStart(4, ' ')} | ${lines[i]}${highlight}`
               )
             }
-            
             sourceContext = contextLines.join('\n')
             console.log('[PdfLogEntryAskAIButton] Source context extracted:', sourceContext.length, 'chars')
           }
@@ -102,9 +105,21 @@ function PdfLogEntryAskAIButton({ logEntry }: AskAIButtonProps) {
     }
   }, [logEntry, getCurrentDocValue, getCurrentDocName, setLLMChatIsOpen])
 
-  // Only show for errors, not warnings or info
+  // Only show for errors
   if (logEntry.level !== 'error') {
     console.log('[PdfLogEntryAskAIButton] NOT showing button - level is:', logEntry.level)
+    return null
+  }
+
+  // Don't show button if models are still loading
+  if (!modelsLoaded) {
+    console.log('[PdfLogEntryAskAIButton] Models still loading, button hidden')
+    return null
+  }
+
+  // Hide button if no models are available
+  if (!hasModels) {
+    console.log('[PdfLogEntryAskAIButton] NOT showing button - no models available')
     return null
   }
 

@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm'
 
 const LLMChatPane = React.memo(function LLMChatPane() {
   const { t } = useTranslation()
-  const { llmChatIsOpen } = useLayoutContext()
+  const { llmChatIsOpen, setLLMChatIsOpen } = useLayoutContext()
   const { 
     messages, 
     isLoading, 
@@ -26,11 +26,20 @@ const LLMChatPane = React.memo(function LLMChatPane() {
   const [inputValue, setInputValue] = useState('')
 
   const [chatOpenedOnce, setChatOpenedOnce] = useState(llmChatIsOpen)
+
   useEffect(() => {
     if (llmChatIsOpen) {
       setChatOpenedOnce(true)
     }
   }, [llmChatIsOpen])
+
+  // Close chat panel if models become unavailable
+  useEffect(() => {
+    if (modelsLoaded && !hasModels && llmChatIsOpen) {
+      console.log('[LLMChat] Closing chat panel - no models available')
+      setLLMChatIsOpen(false)
+    }
+  }, [modelsLoaded, hasModels, llmChatIsOpen, setLLMChatIsOpen])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

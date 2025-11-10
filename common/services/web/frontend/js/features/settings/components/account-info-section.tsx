@@ -104,6 +104,30 @@ function AccountInfoSection() {
     }).catch(() => {})
   }
 
+  const handleToggleUseOwnLLMSettings = (checked: boolean) => {
+    setUseOwnLLMSettings(checked)
+
+    // If unchecking, clear all LLM settings and save to backend
+    if (!checked) {
+      setLlmApiKey('')
+      setLlmModelName('')
+      setLlmApiUrl('')
+      setConnectionCheckResult(null)
+
+      // Save the cleared settings to the backend
+      runLlmAsync(
+        postJSON('/user/llm-settings', {
+          body: {
+            useOwnLLMSettings: false,
+            llmApiKey: undefined,
+            llmModelName: '',
+            llmApiUrl: '',
+          },
+        })
+      ).catch(() => {})
+    }
+  }
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
   }
@@ -200,7 +224,7 @@ function AccountInfoSection() {
             type="checkbox"
             id="use-own-llm-settings"
             checked={useOwnLLMSettings}
-            onChange={(e) => setUseOwnLLMSettings(e.target.checked)}
+            onChange={(e) => handleToggleUseOwnLLMSettings(e.target.checked)}
             style={{ marginRight: '0.5rem' }}
           />
           <OLFormLabel htmlFor="use-own-llm-settings">
